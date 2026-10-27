@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Add to cron or your scheduler to record conditions even when the web UI is closed.
+# Run from project directory: bundle exec ruby bin/capture
+require_relative '../lib/weather_client'
+require_relative '../lib/store'
+
+client = WeatherClient.new
+store = Store.new
+places = store.places
+
+if places.empty?
+  puts 'No saved locations.'
+  exit 0
+end
+
+failures = 0
+places.each do |place|
+  begin
+    forecast = client.forecast(place[:latitude], place[:longitude])
+    store.add_snapshot(place[:id], forecast)
+    puts "Recorded #{place[:name]} at #{Time.now.utc.iso8601}"
+  rescue WeatherClient::Error, SQLite3::Exception => e
+    warn "Failed to record #{place[:name]}: #{e.message}"
+    failures += 1
+  end
+end
+
+exit(failures.zero? ? 0 : 1)

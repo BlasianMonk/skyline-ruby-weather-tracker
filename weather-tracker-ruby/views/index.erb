@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1120">
+  <meta name="description" content="A personal weather tracking dashboard built with Ruby, Sinatra and Open-Meteo.">
+  <title>Skyline — Weather Tracker</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Saved locations">
+      <div class="brand" aria-label="Skyline weather tracker">
+        <span class="brand-mark"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="21" cy="11" r="5" stroke="currentColor" stroke-width="2.3"/><path d="M7 21a6 6 0 016-6 6 6 0 015.8 4.4A5 5 0 1120 29H9a4 4 0 01-2-8z" fill="currentColor" opacity=".9"/></svg></span>
+        <span class="brand-text">skyline<span class="brand-dot">.</span><small>WEATHER STUDIO</small></span>
+      </div>
+
+      <div class="sidebar-section-label">WORKSPACE</div>
+      <div class="sidebar-nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg><span>Overview</span><span class="nav-signal"></span></div>
+
+      <div class="locations-heading"><span>MY LOCATIONS <span class="location-count" id="location-count">0</span></span><button type="button" class="icon-button add-location" id="add-place-button" title="Add a city" aria-label="Add a city">+</button></div>
+      <div id="places-list" class="places-list" aria-live="polite"></div>
+
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-tip"><span class="tip-icon">✦</span><strong>Your personal climate log</strong><p>Save cities and build a record of weather observations over time.</p></div>
+      <div class="sidebar-foot"><span class="live-dot"></span> Powered by Open-Meteo<br><span class="sidebar-copyright">Made with Ruby + Sinatra</span></div>
+    </aside>
+    <div class="mobile-shade" id="mobile-shade"></div>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left"><button type="button" id="mobile-menu" class="icon-button mobile-menu" aria-label="Open saved locations">☰</button><span class="breadcrumb-muted">Workspace</span><span class="breadcrumb-separator">/</span><span class="breadcrumb-active">Overview</span></div>
+        <div class="topbar-right"><div class="clock-label" id="header-clock">—</div><span class="topbar-divider"></span><div class="unit-switch" aria-label="Temperature units"><button type="button" id="unit-c" class="unit-button" aria-pressed="false">°C</button><button type="button" id="unit-f" class="unit-button" aria-pressed="true">°F</button></div><div class="avatar" aria-label="Personal dashboard">S</div></div>
+      </header>
+
+      <div class="page-content">
+        <section class="page-head"><div><div class="eyebrow"><span class="eyebrow-line"></span> YOUR WEATHER, DECODED</div><h1>Weather overview<span class="heading-period">.</span></h1><p>Everything you need to know about the skies ahead.</p></div><div class="head-right"><span class="status-online"><span class="live-dot"></span> LIVE CONDITIONS</span><span id="page-date" class="page-date">—</span></div></section>
+
+        <div class="search-wrap" id="search-wrap"><div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.2 4.2"/></svg><input type="search" id="city-search" autocomplete="off" placeholder="Search a city to start tracking..." aria-label="Search for cities" aria-autocomplete="list" aria-controls="search-results" aria-expanded="false"><kbd>↵</kbd></div><div class="search-results hidden" id="search-results" role="listbox" aria-label="City suggestions"></div></div>
+
+        <div id="flash" class="flash hidden" role="alert"></div>
+
+        <div id="loading" class="loading-screen hidden" role="status"><span class="loading-ring"></span> Looking up the latest weather...</div>
+        <div id="empty-state" class="empty-state hidden"><div class="empty-icon">☁</div><h2>Every forecast starts somewhere</h2><p>Search for a city above to add it to your dashboard and begin tracking its weather.</p><button type="button" id="empty-add" class="primary-button">Find a city <span>→</span></button></div>
+
+        <div id="dashboard" class="dashboard hidden">
+          <div class="section-row current-row"><div class="section-label"><span class="section-bar"></span> CURRENT CONDITIONS</div><div class="current-meta"><span id="last-updated" class="section-meta">Updated —</span><button type="button" id="refresh-weather" class="refresh-button" title="Refresh conditions">↻ Refresh</button></div></div>
+
+          <div class="weather-hero"><div class="hero-haze"></div><div class="hero-grid"></div><div class="hero-content"><div class="hero-location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1116 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span id="hero-city">—</span><span class="hero-country" id="hero-region"></span></div><div class="hero-main"><div class="hero-temp-row"><span id="hero-temperature" class="hero-temp">—</span><span class="hero-degree" id="hero-degree">°F</span></div><div class="hero-condition" id="hero-condition">—</div><p class="hero-feels" id="hero-feels">Feels like —</p></div><div class="hero-footer"><div class="hero-footer-icon">↗</div><span id="hero-summary">Your local weather, at a glance.</span></div></div><div class="hero-art"><div class="weather-icon-large" id="hero-icon" aria-hidden="true"></div><div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div><span class="hero-art-label">TODAY'S SKY</span></div></div>
+
+          <div class="section-row metrics-heading"><div class="section-label"><span class="section-bar"></span> WEATHER DETAILS</div><span class="section-meta">Real-time measurements</span></div>
+          <div class="metrics-grid">
+            <div class="metric-card"><div class="metric-top"><span>Humidity</span><span class="metric-symbol" aria-hidden="true">◈</span></div><div class="metric-number" id="metric-humidity">—<small>%</small></div><div class="metric-footer"><span>Relative humidity</span><div class="progress-track"><span class="progress-fill cyan" id="humidity-bar" style="width:0%"></span></div></div></div>
+            <div class="metric-card"><div class="metric-top"><span>Wind speed</span><span class="metric-symbol" aria-hidden="true">≋</span></div><div class="metric-number" id="metric-wind">—<small>mph</small></div><div class="metric-footer"><span>At ground level</span><span class="metric-trend">↗ CURRENT</span></div></div>
+            <div class="metric-card"><div class="metric-top"><span>Rainfall</span><span class="metric-symbol" aria-hidden="true">☂</span></div><div class="metric-number" id="metric-rain">—<small>in</small></div><div class="metric-footer"><span>Current precipitation</span><span class="metric-trend">● LIVE</span></div></div>
+            <div class="metric-card"><div class="metric-top"><span>UV index</span><span class="metric-symbol" aria-hidden="true">☀</span></div><div class="metric-number" id="metric-uv">—<small> UV</small></div><div class="metric-footer"><span>Today's maximum</span><span class="metric-trend" id="uv-label">—</span></div></div>
+          </div>
+
+          <div class="dashboard-columns">
+            <section class="panel hourly-panel"><div class="panel-heading"><div><span class="panel-eyebrow">THE NEXT 24 HOURS</span><h2>Hourly forecast</h2></div><div class="panel-heading-right"><span class="chart-legend"><span></span> Temperature</span><span class="panel-tag">24H</span></div></div><div class="chart" id="hourly-chart" aria-label="Chart of upcoming hourly temperatures"></div><div class="hourly-chart-foot"><span>● &nbsp;Temperature trend</span><span>Based on local forecast time</span></div></section>
+            <section class="panel day-panel"><div class="panel-heading"><div><span class="panel-eyebrow">DAYLIGHT &amp; RAIN</span><h2>Today's outlook</h2></div><span class="panel-tag">TODAY</span></div><div class="outlook-feature"><div class="outlook-icon">☀</div><div><div class="outlook-caption">Sunrise</div><div id="sunrise-time" class="outlook-value">—</div></div></div><div class="outlook-feature"><div class="outlook-icon moon">☾</div><div><div class="outlook-caption">Sunset</div><div id="sunset-time" class="outlook-value">—</div></div></div><div class="outlook-rain"><div class="outlook-rain-top"><span>Rain probability</span><strong id="rain-probability">—</strong></div><div class="progress-track"><span class="progress-fill violet" id="rain-bar" style="width:0%"></span></div></div></section>
+          </div>
+
+          <section class="panel forecast-panel"><div class="panel-heading"><div><span class="panel-eyebrow">PLAN AHEAD</span><h2>7-day forecast</h2></div><span class="panel-tag">THIS WEEK</span></div><div class="forecast-grid" id="forecast-list" aria-label="Seven-day weather forecast"></div></section>
+
+          <section class="panel history-panel"><div class="panel-heading"><div><span class="panel-eyebrow">YOUR RECORDED DATA</span><h2>Weather history</h2></div><div class="history-actions"><a id="export-history" class="export-button" href="#" download>↓ Export CSV</a><div class="segmented"><button type="button" id="history-14" class="segmented-active" aria-pressed="true">14 days</button><button type="button" id="history-30" aria-pressed="false">30 days</button></div></div></div><div id="history-chart" class="history-chart"></div><div class="history-caption"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></svg><span>History records one observation per hour when you check this city or run the optional capture task.</span></div></section>
+        </div>
+        <footer class="site-footer"><span>© <span id="footer-year"></span> Skyline Weather Studio</span><span>Forecasts by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · For informational use</span></footer>
+      </div>
+    </main>
+  </div>
+  <div class="toast hidden" id="toast" role="status"></div>
+</body>
+</html>
